@@ -15,10 +15,11 @@ exports.config = {
     }
   ],
   reporters: [
+    "spec",
     [
       "allure",
       {
-        outputDir: "allure-results",
+        outputDir: "reports/allure-results",
         disableWebdriverStepsReporting: true,
         disableWebdriverScreenshotsReporting: true
       }
@@ -35,7 +36,6 @@ exports.config = {
     ui: "bdd",
     timeout: 60000
   },
-
   afterTest(test) {
     if (test.passed === false) {
       takeScreenshot("./logs/screenshot/", "screenshot_fail.png");

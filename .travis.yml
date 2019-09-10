@@ -9,8 +9,11 @@ branches:
 services:
   - docker
 addons:
-  artifacts: true
+  artifacts:
+    paths:
+      - ./reports
 before_install:
+  - docker pull selenium/hub:3.141.59 selenium/node-chrome:3.141.59 selenium/node-firefox:3.141.59
   - docker-compose up -d
 install:
   - npm install
