@@ -8,6 +8,8 @@ branches:
     - master
 services:
   - docker
+addons:
+  artifacts: true
 before_install:
   - docker-compose up -d
 install:
