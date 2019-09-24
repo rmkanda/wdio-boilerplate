@@ -1,0 +1,59 @@
+def label = "ci-build-agent-${env.JOB_NAME}-${env.BUILD_ID}${UUID.randomUUID().toString()}"
+
+podTemplate(label: label, containers: [
+  containerTemplate(name: 'node', image: 'node:lts-alpine', command: 'cat', ttyEnabled: true),
+  containerTemplate(name: 'gcloud', image: 'rama646/gcloud-sdk-kubectl:262.0.0', command: 'cat', ttyEnabled: true)
+],
+volumes: [
+  hostPathVolume(mountPath: '/root/.m2', hostPath: '/tmp/jenkins/.m2'),
+  hostPathVolume(mountPath: '/var/run/docker.sock', hostPath: '/var/run/docker.sock')
+]) {
+  node(label) {
+    stage('Checkout') {
+        checkout scm
+        sh "ls"
+    }
+    stage('Build') {
+      container('node') {
+        sh "node --version"
+        sh "npm install"
+        sh "sed -i 's/localhost/selenium-hub/g' wdio.conf.js"
+      }
+    }
+    stage('Deploy Agents') {
+      container('gcloud') {
+        sh "gcloud --version"
+        withCredentials([file(credentialsId: 'gcp-project-gke-key', variable: 'GC_KEY')]) {
+            sh"gcloud auth activate-service-account --key-file=${GC_KEY}"
+            sh "gcloud container clusters get-credentials gcp-project --zone europe-west3-b"
+            sh "kubectl get svc,deployments,pods"
+            sh "kubectl apply -f k8s/selenium-hub-deployment.yaml"
+            sh "kubectl apply -f k8s/selenium-node-firefox-deployment.yaml"
+            sh "sleep 10s"
+            sh "sh wait-for-hub.sh"
+            sh "kubectl get svc,deployments,pods"
+        }
+      }
+    }
+    stage('Test') {
+      container('node') {
+        sh "node --version"
+        sh "npm test"
+      }
+    }
+    stage('clean') {
+      container('gcloud') {
+        sh "gcloud --version"
+        withCredentials([file(credentialsId: 'gcp-project-gke-key', variable: 'GC_KEY')]) {
+            sh "gcloud auth activate-service-account --key-file=${GC_KEY}"
+            sh "gcloud container clusters get-credentials gcp-project --zone europe-west3-b"
+            sh "kubectl get svc,deployments,pods"
+            sh """
+              kubectl delete deployment selenium-hub
+              kubectl delete deployment selenium-node-firefox
+            """
+        }
+      }
+    }
+  }
+}

@@ -10,3 +10,7 @@
 - Install dependencies `npm install`
 - Running tests `npm test`
 - Viewing Report `npm report`
+
+## NOTE:
+
+For running in kubernetes change the wdio.conf.js `localhost` to `selenium-hub`
