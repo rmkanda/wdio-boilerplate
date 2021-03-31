@@ -18,7 +18,7 @@
     "@wdio/spec-reporter": "^5.22.4",
     "chromedriver": "^84.0.1",
     "dotenv": "^8.2.0",
-    "faker": "^4.1.0"
+    "faker": "^5.5.2"
   },
   "dependencies": {}
 }
